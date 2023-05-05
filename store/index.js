@@ -60,6 +60,7 @@ export const getters = {
   event: (state) => (id) => {
     return state.events.find((event) => event.id === Number(id));
   },
+  // eventsDates:()=>(eventId, )=>{},
   lastEventId(state) {
     return [...state.events]
       .sort(function (a, b) {
