@@ -4,10 +4,10 @@
     <v-row align-content="center" justify="center" class="space-x-12">
       <!-- 日付選択 -->
       <v-date-picker
+        v-model="date"
         no-title
         bottom
         color="primary"
-        @change="addDate"
         :min="minDate"
       />
       <!-- 時刻選択 -->
@@ -17,15 +17,26 @@
         :allowed-minutes="(m) => m % 5 === 0"
       />
     </v-row>
+    <v-card class="p-8">
+      <v-row align="center" justify="center">
+        <v-card-title>
+          {{ date }}
+          {{ time }}
+        </v-card-title>
+
+        <v-btn @click="addDate">Create</v-btn>
+      </v-row>
+    </v-card>
+
     <v-col>
       <!-- 日時選択解除 -->
       <v-list class="overflow-y-auto" max-height="75vh">
-        <div v-if="dates.length === 0">Click Calendar to add date!</div>
+        <div v-if="event.dates.length === 0">Click Calendar to add date!</div>
         <date-list-item
-          @onRemove="removeDate"
-          v-for="date in dates"
+          v-for="date in event.dates"
           :key="date.id"
           :date="date.from"
+          @onRemove="removeDate(date.id)"
         />
       </v-list>
     </v-col>
@@ -36,43 +47,46 @@
 import { DateTime } from "luxon";
 
 export default {
-  model: {
-    prop: "value",
-    event: "change",
-  },
-  props: {
-    value: { type: Object, required: true },
-  },
+  model: {},
+  props: {},
   data() {
     return {
-      title: "",
-      description: "",
-      time: "19:00",
+      time: "12:00",
+      date: DateTime.now().toFormat("yyyy-MM-dd"),
       minDate: DateTime.now().toFormat("yyyy-MM-dd"),
-      dates: [{ id: 1, from: DateTime.now() }],
     };
   },
   computed: {
+    id() {
+      return this.$store.getters.lastEventDateId + 1;
+    },
     event() {
       return this.$store.getters.event(this.$route.params.id);
     },
+    eventId() {
+      return this.$route.params.id;
+    },
   },
   methods: {
-    addDate(date) {
-      const time = DateTime.fromFormat(this.time, "HH:mm");
-      const formattedDate = DateTime.formatISO(date).set({
-        hour: time.hour,
-        minute: time.minute,
+    addDate() {
+      const dateTime = DateTime.fromISO(this.date).set({
+        hour: this.time.split(":")[0],
+        minute: this.time.split(":")[1],
       });
-      this.dates = [...this.dates, { id: +new Date(), from: formattedDate }];
-      this.changeEvent();
+      console.log(this.time);
+      const date = { id: Number(this.id), from: dateTime };
+      this.$store.dispatch("addEventDate", {
+        eventId: Number(this.eventId),
+        date,
+      });
     },
     removeDate(id) {
-      this.dates = this.dates.filter((d) => d.id !== id);
-      this.changeEvent();
+      this.$store.dispatch("removeEventDate", {
+        eventId: this.$route.params.id,
+        dateId: id,
+      });
     },
   },
-  watch: {},
 };
 </script>
 

@@ -165,7 +165,7 @@ export default {
       return this.$store.getters.event(this.$route.params.id);
     },
     eventId() {
-      return "eventId";
+      return this.$route.params.id;
     },
     title() {
       return "タイトル";
@@ -190,35 +190,7 @@ export default {
       ];
     },
     votes() {
-      return [
-        {
-          id: 1,
-          name: "れい",
-          vote: {
-            1: 2,
-            2: 2,
-            3: 1,
-          },
-        },
-        {
-          id: 2,
-          name: "りお",
-          vote: {
-            1: 0,
-            2: 2,
-            3: 0,
-          },
-        },
-        {
-          id: 3,
-          name: "かえで",
-          vote: {
-            1: 1,
-            2: 2,
-            3: 0,
-          },
-        },
-      ];
+      return [];
     },
     scores() {
       const v = {};

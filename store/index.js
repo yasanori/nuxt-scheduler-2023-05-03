@@ -61,41 +61,89 @@ export const getters = {
     return state.events.find((event) => event.id === Number(id));
   },
   lastEventId(state) {
-    return state.events.slice(-1)[0];
+    return [...state.events]
+      .sort(function (a, b) {
+        if (a.id > b.id) {
+          return 1;
+        } else {
+          return -1;
+        }
+      })
+      .slice(-1)[0].id;
+  },
+  lastEventDateId(state) {
+    return [...state.events]
+      .flatMap((event) => event.dates)
+      .sort(function (a, b) {
+        if (a.id > b.id) {
+          return 1;
+        } else {
+          return -1;
+        }
+      })
+      .slice(-1)[0].id;
   },
 };
 
 export const mutations = {
-  // createEvent(state, title, description) {
-  //   state.events = [...state.events, ]
-  // },
-  setEvent(state, event) {
+  addEvent(state, event) {
     state.events = [...state.events, event];
+  },
+  setEvents(state, events) {
+    state.events = events;
   },
 };
 
 export const actions = {
-  clearEvent(ctx) {
-    ctx.commit("setEventId", "");
-    ctx.commit("setTitle", "");
-    ctx.commit("setDescription", "");
-    ctx.commit("setDates", []);
-    ctx.commit("setVotes", []);
-  },
-  setEvent(ctx, { id, title, description, dates, votes }) {
-    ctx.commit("setEventId", id);
-    title && ctx.commit("setTitle", title);
-    description && ctx.commit("setDescription", description);
-    dates && ctx.commit("setDates", dates);
-    votes && ctx.commit("setVotes", votes);
-  },
-  createEvent(ctx, { id, title, description }) {
-    ctx.commit("setEvent", {
+  createEvent(context, { id, title, description }) {
+    context.commit("addEvent", {
       id,
       title,
       description,
       dates: [],
       votes: [],
     });
+  },
+  addEventDate({ commit, state, getters }, { eventId, date }) {
+    const excludedEvents = state.events.filter((event) => event.id !== eventId);
+    const targetEvent = getters.event(eventId);
+    if (!targetEvent)
+      return window.alert("対象のイベントが見つかりませんでした");
+    const addedEventDates = [...targetEvent.dates, date];
+    // 削除の前後でdateの数が一致している場合失敗のアラート表示
+    if (targetEvent.dates.length === addedEventDates.length)
+      return window.alert("作成できませんでした");
+    commit("setEvents", [
+      ...excludedEvents,
+      {
+        ...targetEvent,
+        dates: addedEventDates,
+      },
+    ]);
+  },
+  removeEventDate({ commit, state }, { eventId, dateId }) {
+    const excludedEvents = state.events.filter(
+      (event) => event.id !== Number(eventId)
+    );
+    const targetEvent = state.events.find(
+      (event) => event.id === Number(eventId)
+    );
+    if (!targetEvent)
+      return window.alert("対象のイベントが見つかりませんでした");
+    const removedEventDates = targetEvent.dates.filter(
+      (date) => date.id !== Number(dateId)
+    );
+    // 削除の前後でdateの数が一致している場合失敗のアラート表示
+    if (targetEvent.dates.length === removedEventDates.length)
+      return window.alert("削除できませんでした");
+    if (window.confirm("削除しますか？")) {
+      commit("setEvents", [
+        ...excludedEvents,
+        {
+          ...targetEvent,
+          dates: removedEventDates,
+        },
+      ]);
+    }
   },
 };
